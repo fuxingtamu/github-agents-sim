@@ -1,0 +1,61 @@
+# Role Configuration
+
+roles:
+  maintainer:
+    name: "Maintainer"
+    description: "Project maintainer with merge and decision authority"
+    count_range: [1, 2]
+    permissions:
+      - merge_pr
+      - close_issue
+      - add_label
+      - assign_task
+      - manage_collaborators
+    default_persona_weights:
+      gatekeeper: 0.4
+      mentor: 0.4
+      architect: 0.2
+
+  contributor:
+    name: "Contributor"
+    description: "Code contributor who creates PRs and fixes bugs"
+    count_range: [2, 5]
+    permissions:
+      - create_branch
+      - commit_code
+      - create_pr
+      - comment
+      - mention
+    default_persona_weights:
+      ninja: 0.3
+      collaborator: 0.3
+      bug_hunter: 0.2
+      mentor: 0.2
+
+  reviewer:
+    name: "Reviewer"
+    description: "Code reviewer who provides feedback and approvals"
+    count_range: [1, 3]
+    permissions:
+      - review_pr
+      - approve
+      - request_changes
+      - comment
+      - mention
+    default_persona_weights:
+      gatekeeper: 0.5
+      mentor: 0.3
+      ninja: 0.2
+
+  bot:
+    name: "Bot"
+    description: "Automated bot for CI/CD and maintenance tasks"
+    count_range: [1, 2]
+    permissions:
+      - run_tests
+      - auto_label
+      - update_deps
+      - comment
+    types:
+      - ci_bot
+      - dependabot

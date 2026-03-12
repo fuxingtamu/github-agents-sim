@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.gharchive.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.github.com)",
+      "Bash(cd D:/GitHub_simulation && python -c \"from github_agent_sim.config.settings import Settings; s = Settings\\(data_dir='D:/GitHub_simulation/data'\\); print\\('Settings OK'\\); print\\(f'Data dir: {s.data_dir}'\\); print\\(f'DB URL: {s.database_url}'\\)\")",
+      "Bash(cd D:/GitHub_simulation && pip install -e . 2>&1 | tail -20)",
+      "Bash(cd D:/GitHub_simulation && python -c \"\nfrom github_agent_sim.config.settings import Settings\nfrom github_agent_sim.agents import ContributorAgent, MaintainerAgent, ReviewerAgent, BotAgent\nfrom github_agent_sim.simulation.git_sandbox import GitSandbox\nfrom github_agent_sim.simulation.event_bus import EventBus, get_event_bus\nfrom github_agent_sim.simulation.message_queue import MessageQueue, MentionSystem\n\nprint\\('✓ All modules imported successfully!'\\)\nprint\\(\\)\nprint\\('Available components:'\\)\nprint\\('  - Settings \\(config\\)'\\)\nprint\\('  - ContributorAgent, MaintainerAgent, ReviewerAgent, BotAgent \\(agents\\)'\\)\nprint\\('  - GitSandbox \\(simulation\\)'\\)\nprint\\('  - EventBus \\(simulation\\)'\\)\nprint\\('  - MessageQueue, MentionSystem \\(simulation\\)'\\)\n\")",
+      "Bash(cd D:/GitHub_simulation && python -c \"\nfrom github_agent_sim.config.settings import Settings\nfrom github_agent_sim.agents import ContributorAgent, MaintainerAgent, ReviewerAgent, BotAgent\nfrom github_agent_sim.simulation.git_sandbox import GitSandbox\nfrom github_agent_sim.simulation.event_bus import EventBus, get_event_bus\nfrom github_agent_sim.simulation.message_queue import MessageQueue, MentionSystem\n\nprint\\('[OK] All modules imported successfully!'\\)\nprint\\(\\)\nprint\\('Available components:'\\)\nprint\\('  - Settings \\(config\\)'\\)\nprint\\('  - ContributorAgent, MaintainerAgent, ReviewerAgent, BotAgent \\(agents\\)'\\)\nprint\\('  - GitSandbox \\(simulation\\)'\\)\nprint\\('  - EventBus \\(simulation\\)'\\)\nprint\\('  - MessageQueue, MentionSystem \\(simulation\\)'\\)\n\")",
+      "Bash(cd D:/GitHub_simulation && python -m pytest tests/ -v --tb=short 2>&1 | head -80)",
+      "Bash(cd D:/GitHub_simulation && python examples/run_simulation.py 2>&1)",
+      "Bash(cd D:/GitHub_simulation && sed -i 's/✓/[OK]/g' examples/run_simulation.py && sed -i 's/→/  ->/g' examples/run_simulation.py)",
+      "Bash(python -c \"import sys; print\\('Python:', sys.executable\\); print\\('Prefix:', sys.prefix\\); print\\('Base:', sys.base_prefix\\)\")",
+      "Bash(pip show:*)",
+      "Bash(cd D:/GitHub_simulation && uv venv)",
+      "Bash(cd D:/GitHub_simulation && python -m venv .venv)",
+      "Bash(cd D:/GitHub_simulation && .venv/Scripts/activate && pip install -e \".[dev,analysis]\" 2>&1 | tail -30)",
+      "Bash(cd D:/GitHub_simulation && .venv/Scripts/activate && python -c \"import sys; print\\('Python:', sys.executable\\); print\\('Virtual Env:', sys.prefix != sys.base_prefix\\)\")",
+      "Bash(cd D:/GitHub_simulation && .venv/Scripts/activate && python -c \"import sys; print\\('Python:', sys.executable\\); print\\('Is Virtual Env:', sys.prefix != sys.base_prefix\\)\")",
+      "Bash(cd D:/GitHub_simulation && .venv/Scripts/python.exe -c \"import sys; print\\('Python:', sys.executable\\); venv = sys.prefix != sys.base_prefix; print\\('Is Virtual Env:', venv\\)\")",
+      "Bash(cd D:/GitHub_simulation && .venv/Scripts/python.exe -c \"import sys; print\\('Python:', sys.executable\\); print\\('Prefix:', sys.prefix\\)\")",
+      "Bash(cd D:/GitHub_simulation && gh repo create fuxingtamu/github-agents-sim --public --source=. --description=\"GitHub 开发者行为多智能体模拟系统 - AI Agent Simulation for GitHub Developer Behavior\" --push)"
+    ]
+  }
+}

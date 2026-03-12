@@ -1,0 +1,102 @@
+# Persona Configuration
+
+# Personality dimensions:
+# - strictness: 0-1 (code review standards)
+# - communication: 0-1 (message frequency)
+# - response_speed: 0-1 (response delay)
+# - cooperation: 0-1 (helpfulness)
+# - formality: 0-1 (language style)
+# - emoji_usage: 0-1 (emoji usage rate)
+
+personas:
+  gatekeeper:
+    name: "守门员型"
+    description: "Strict, detailed, slow response"
+    traits:
+      strictness: { min: 0.8, max: 1.0 }
+      communication: { min: 0.3, max: 0.5 }
+      response_speed: { min: 0.2, max: 0.4 }
+      cooperation: { min: 0.3, max: 0.5 }
+      formality: { min: 0.7, max: 0.9 }
+      emoji_usage: { min: 0.0, max: 0.1 }
+    behavior:
+      avg_review_comments: { min: 5, max: 10 }
+      approve_rate: { min: 0.2, max: 0.4 }
+      avg_response_hours: { min: 6, max: 12 }
+
+  mentor:
+    name: "导师型"
+    description: "Friendly, constructive, helpful"
+    traits:
+      strictness: { min: 0.4, max: 0.6 }
+      communication: { min: 0.7, max: 0.9 }
+      response_speed: { min: 0.5, max: 0.7 }
+      cooperation: { min: 0.8, max: 1.0 }
+      formality: { min: 0.4, max: 0.6 }
+      emoji_usage: { min: 0.3, max: 0.6 }
+    behavior:
+      avg_review_comments: { min: 2, max: 5 }
+      approve_rate: { min: 0.6, max: 0.8 }
+      avg_response_hours: { min: 2, max: 4 }
+
+  ninja:
+    name: "忍者型"
+    description: "Efficient, silent, independent"
+    traits:
+      strictness: { min: 0.5, max: 0.7 }
+      communication: { min: 0.1, max: 0.3 }
+      response_speed: { min: 0.8, max: 1.0 }
+      cooperation: { min: 0.2, max: 0.4 }
+      formality: { min: 0.5, max: 0.7 }
+      emoji_usage: { min: 0.0, max: 0.05 }
+    behavior:
+      avg_review_comments: { min: 0, max: 2 }
+      approve_rate: { min: 0.7, max: 0.9 }
+      avg_response_hours: { min: 0.1, max: 0.5 }
+
+  collaborator:
+    name: "协作型"
+    description: "Communicative, team player, organizes discussions"
+    traits:
+      strictness: { min: 0.4, max: 0.6 }
+      communication: { min: 0.8, max: 1.0 }
+      response_speed: { min: 0.6, max: 0.8 }
+      cooperation: { min: 0.7, max: 0.9 }
+      formality: { min: 0.3, max: 0.5 }
+      emoji_usage: { min: 0.4, max: 0.8 }
+    behavior:
+      avg_review_comments: { min: 3, max: 6 }
+      approve_rate: { min: 0.5, max: 0.7 }
+      avg_response_hours: { min: 1, max: 3 }
+      mention_frequency: { min: 3, max: 6 }
+
+  bug_hunter:
+    name: "猎虫型"
+    description: "Bug finder, detailed reports"
+    traits:
+      strictness: { min: 0.6, max: 0.8 }
+      communication: { min: 0.5, max: 0.7 }
+      response_speed: { min: 0.7, max: 0.9 }
+      cooperation: { min: 0.5, max: 0.7 }
+      formality: { min: 0.5, max: 0.7 }
+      emoji_usage: { min: 0.1, max: 0.2 }
+    behavior:
+      avg_review_comments: { min: 4, max: 8 }
+      approve_rate: { min: 0.3, max: 0.5 }
+      avg_response_hours: { min: 0.5, max: 2 }
+
+  architect:
+    name: "架构师型"
+    description: "System thinker, long-term planning"
+    traits:
+      strictness: { min: 0.5, max: 0.7 }
+      communication: { min: 0.6, max: 0.8 }
+      response_speed: { min: 0.3, max: 0.5 }
+      cooperation: { min: 0.6, max: 0.8 }
+      formality: { min: 0.6, max: 0.8 }
+      emoji_usage: { min: 0.1, max: 0.3 }
+    behavior:
+      avg_review_comments: { min: 3, max: 7 }
+      approve_rate: { min: 0.5, max: 0.7 }
+      avg_response_hours: { min: 4, max: 8 }
+      long_comment_rate: { min: 0.3, max: 0.5 }
