@@ -135,6 +135,50 @@ def init_database(conn: sqlite3.Connection | None = None) -> None:
             )
         """)
 
+        # Pull requests table (Phase 2)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sim_pull_requests (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                simulation_id   TEXT NOT NULL,
+                pr_number       INTEGER NOT NULL,
+                title           TEXT NOT NULL,
+                body            TEXT,
+                head_branch     TEXT NOT NULL,
+                base_branch     TEXT NOT NULL,
+                author_id       TEXT NOT NULL,
+                status          TEXT DEFAULT 'open',  -- open, closed, merged
+                merge_commit_sha TEXT,
+                additions       INTEGER DEFAULT 0,
+                deletions       INTEGER DEFAULT 0,
+                files_changed   INTEGER DEFAULT 0,
+                created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                merged_at       TIMESTAMP,
+                closed_at       TIMESTAMP,
+
+                FOREIGN KEY (simulation_id) REFERENCES simulations(id),
+                FOREIGN KEY (author_id) REFERENCES agents(id),
+                UNIQUE(simulation_id, pr_number)
+            )
+        """)
+
+        # PR reviews table (Phase 2)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sim_pr_reviews (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                simulation_id   TEXT NOT NULL,
+                pr_number       INTEGER NOT NULL,
+                reviewer_id     TEXT NOT NULL,
+                review_type     TEXT NOT NULL,  -- approved, changes_requested, commented
+                body            TEXT,
+                comments        TEXT,  -- JSON array of line comments
+                created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (simulation_id) REFERENCES simulations(id),
+                FOREIGN KEY (reviewer_id) REFERENCES agents(id)
+            )
+        """)
+
         # Behavior vectors table (for RAG)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS behavior_vectors (

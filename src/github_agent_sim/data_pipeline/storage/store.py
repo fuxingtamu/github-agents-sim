@@ -654,6 +654,289 @@ class SimActionStore:
                 conn.close()
 
 
+class PullRequestStore:
+    """Storage operations for pull requests (Phase 2)."""
+
+    @staticmethod
+    def create(
+        simulation_id: str,
+        pr_number: int,
+        title: str,
+        head_branch: str,
+        base_branch: str,
+        author_id: str,
+        body: str | None = None,
+        conn: sqlite3.Connection | None = None,
+    ) -> int:
+        """Create a new pull request."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO sim_pull_requests
+                (simulation_id, pr_number, title, body, head_branch, base_branch, author_id, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'open')
+                """,
+                (simulation_id, pr_number, title, body, head_branch, base_branch, author_id),
+            )
+            conn.commit()
+            return cursor.lastrowid
+        finally:
+            if close:
+                conn.close()
+
+    @staticmethod
+    def get_by_number(
+        simulation_id: str,
+        pr_number: int,
+        conn: sqlite3.Connection | None = None,
+    ) -> dict | None:
+        """Get a PR by number."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM sim_pull_requests
+                WHERE simulation_id = ? AND pr_number = ?
+                """,
+                (simulation_id, pr_number),
+            )
+            row = cursor.fetchone()
+            return dict(row) if row else None
+        finally:
+            if close:
+                conn.close()
+
+    @staticmethod
+    def get_open_prs(
+        simulation_id: str,
+        conn: sqlite3.Connection | None = None,
+    ) -> list[dict]:
+        """Get all open PRs for a simulation."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM sim_pull_requests
+                WHERE simulation_id = ? AND status = 'open'
+                ORDER BY created_at ASC
+                """,
+                (simulation_id,),
+            )
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows]
+        finally:
+            if close:
+                conn.close()
+
+    @staticmethod
+    def update_status(
+        simulation_id: str,
+        pr_number: int,
+        status: str,  # 'open', 'closed', 'merged'
+        merge_commit_sha: str | None = None,
+        conn: sqlite3.Connection | None = None,
+    ) -> None:
+        """Update PR status."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            if status == 'merged' and merge_commit_sha:
+                cursor.execute(
+                    """
+                    UPDATE sim_pull_requests
+                    SET status = ?, merge_commit_sha = ?, merged_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE simulation_id = ? AND pr_number = ?
+                    """,
+                    (status, merge_commit_sha, simulation_id, pr_number),
+                )
+            elif status == 'closed':
+                cursor.execute(
+                    """
+                    UPDATE sim_pull_requests
+                    SET status = ?, closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE simulation_id = ? AND pr_number = ?
+                    """,
+                    (status, simulation_id, pr_number),
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE sim_pull_requests
+                    SET status = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE simulation_id = ? AND pr_number = ?
+                    """,
+                    (status, simulation_id, pr_number),
+                )
+            conn.commit()
+        finally:
+            if close:
+                conn.close()
+
+    @staticmethod
+    def update_changes(
+        simulation_id: str,
+        pr_number: int,
+        additions: int,
+        deletions: int,
+        files_changed: int,
+        conn: sqlite3.Connection | None = None,
+    ) -> None:
+        """Update PR change statistics."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE sim_pull_requests
+                SET additions = ?, deletions = ?, files_changed = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE simulation_id = ? AND pr_number = ?
+                """,
+                (additions, deletions, files_changed, simulation_id, pr_number),
+            )
+            conn.commit()
+        finally:
+            if close:
+                conn.close()
+
+
+class PRReviewStore:
+    """Storage operations for PR reviews (Phase 2)."""
+
+    @staticmethod
+    def create(
+        simulation_id: str,
+        pr_number: int,
+        reviewer_id: str,
+        review_type: str,  # 'approved', 'changes_requested', 'commented'
+        body: str | None = None,
+        comments: list[dict] | None = None,
+        conn: sqlite3.Connection | None = None,
+    ) -> int:
+        """Create a new PR review."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO sim_pr_reviews
+                (simulation_id, pr_number, reviewer_id, review_type, body, comments)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    simulation_id,
+                    pr_number,
+                    reviewer_id,
+                    review_type,
+                    body,
+                    json.dumps(comments) if comments else None,
+                ),
+            )
+            conn.commit()
+            return cursor.lastrowid
+        finally:
+            if close:
+                conn.close()
+
+    @staticmethod
+    def get_for_pr(
+        simulation_id: str,
+        pr_number: int,
+        conn: sqlite3.Connection | None = None,
+    ) -> list[dict]:
+        """Get all reviews for a PR."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM sim_pr_reviews
+                WHERE simulation_id = ? AND pr_number = ?
+                ORDER BY created_at ASC
+                """,
+                (simulation_id, pr_number),
+            )
+            rows = cursor.fetchall()
+            result = []
+            for row in rows:
+                data = dict(row)
+                if data.get("comments"):
+                    data["comments"] = json.loads(data["comments"])
+                result.append(data)
+            return result
+        finally:
+            if close:
+                conn.close()
+
+    @staticmethod
+    def get_pr_status(
+        simulation_id: str,
+        pr_number: int,
+        conn: sqlite3.Connection | None = None,
+    ) -> dict:
+        """Get PR review status summary."""
+        if conn is None:
+            conn = get_connection()
+            close = True
+        else:
+            close = False
+
+        try:
+            reviews = PRReviewStore.get_for_pr(simulation_id, pr_number, conn)
+
+            approvals = sum(1 for r in reviews if r["review_type"] == "approved")
+            changes_requested = sum(1 for r in reviews if r["review_type"] == "changes_requested")
+
+            return {
+                "total_reviews": len(reviews),
+                "approvals": approvals,
+                "changes_requested": changes_requested,
+                "pending": len(reviews) - approvals - changes_requested,
+                "reviews": reviews,
+            }
+        finally:
+            if close:
+                conn.close()
+
+
 def process_events_to_storage(
     events: list[dict],
     conn: sqlite3.Connection | None = None,

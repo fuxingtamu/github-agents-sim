@@ -34,6 +34,33 @@ class CommitInfo:
     parents: list[str] = field(default_factory=list)
 
 
+@dataclass
+class PullRequestInfo:
+    """Pull request information."""
+
+    pr_number: int
+    title: str
+    body: str
+    head_branch: str
+    base_branch: str
+    author_id: str
+    status: str  # 'open', 'closed', 'merged'
+    additions: int = 0
+    deletions: int = 0
+    files_changed: int = 0
+    merge_commit_sha: str | None = None
+
+
+@dataclass
+class PRReview:
+    """PR review information."""
+
+    reviewer_id: str
+    review_type: str  # 'approved', 'changes_requested', 'commented'
+    body: str
+    comments: list[dict] = field(default_factory=list)
+
+
 class GitSandbox:
     """
     Git sandbox for safe Git operations.
@@ -64,6 +91,8 @@ class GitSandbox:
 
         self.remote_url = remote_url
         self._initialized = False
+        self._pr_counter = 0  # Local PR number counter
+        self._pull_requests: dict[int, PullRequestInfo] = {}  # In-memory PR storage
 
         if create:
             self._initialize()
@@ -178,12 +207,17 @@ class GitSandbox:
         """
         self._check_initialized()
 
-        if from_branch:
-            result = self._run_git_command(
-                ["checkout", "-b", name, from_branch]
-            )
-        else:
+        # If from_branch is not specified, use current branch
+        if from_branch is None:
             result = self._run_git_command(["checkout", "-b", name])
+        else:
+            # Check if the source branch exists
+            branch_result = self._run_git_command(["show-ref", "--verify", "--quiet", f"refs/heads/{from_branch}"])
+            if branch_result.returncode != 0:
+                # Source branch doesn't exist, use current branch instead
+                result = self._run_git_command(["checkout", "-b", name])
+            else:
+                result = self._run_git_command(["checkout", "-b", name, from_branch])
 
         return result.returncode == 0
 
@@ -399,10 +433,200 @@ class GitSandbox:
         else:
             return False, result.stderr
 
+    def create_pr(
+        self,
+        title: str,
+        body: str,
+        head_branch: str,
+        base_branch: str,
+        author_id: str,
+    ) -> PullRequestInfo | None:
+        """
+        Create a pull request.
+
+        Args:
+            title: PR title
+            body: PR description
+            head_branch: Source branch
+            base_branch: Target branch
+            author_id: Author agent ID
+
+        Returns:
+            PullRequestInfo or None if failed
+        """
+        self._check_initialized()
+
+        # Verify head branch exists
+        status = self.status()
+        if head_branch not in status.branches:
+            return None
+
+        # Calculate changes (simplified - count files different from base)
+        result = self._run_git_command(["diff", "--stat", f"{base_branch}..{head_branch}"])
+        additions, deletions, files_changed = 0, 0, 0
+        if result.returncode == 0 and result.stdout.strip():
+            lines = result.stdout.strip().split("\n")
+            for line in lines[:-1]:  # Last line is summary
+                parts = line.split("|")
+                if len(parts) >= 2:
+                    files_changed += 1
+                    # Parse + and - counts
+                    diff_part = parts[-1] if len(parts) > 1 else ""
+                    additions += diff_part.count("+")
+                    deletions += diff_part.count("-")
+
+        # Create PR
+        self._pr_counter += 1
+        pr_number = self._pr_counter
+
+        pr = PullRequestInfo(
+            pr_number=pr_number,
+            title=title,
+            body=body,
+            head_branch=head_branch,
+            base_branch=base_branch,
+            author_id=author_id,
+            status="open",
+            additions=additions,
+            deletions=deletions,
+            files_changed=files_changed,
+        )
+
+        self._pull_requests[pr_number] = pr
+        return pr
+
+    def merge_pr(
+        self,
+        pr_number: int,
+        merge_method: str = "merge",  # 'merge', 'squash', 'rebase'
+    ) -> tuple[bool, str]:
+        """
+        Merge a pull request.
+
+        Args:
+            pr_number: PR number to merge
+            merge_method: Merge method to use
+
+        Returns:
+            Tuple of (success, message)
+        """
+        self._check_initialized()
+
+        pr = self._pull_requests.get(pr_number)
+        if not pr:
+            return False, f"PR #{pr_number} not found"
+
+        if pr.status != "open":
+            return False, f"PR #{pr_number} is already {pr.status}"
+
+        # Switch to base branch
+        self.switch_branch(pr.base_branch)
+
+        # Merge the head branch
+        success, message = self.merge(pr.head_branch, no_ff=(merge_method == "merge"))
+
+        if success:
+            pr.status = "merged"
+            pr.merge_commit_sha = self.log(1)[0].hash if self.log(1) else "unknown"
+            return True, f"Merged PR #{pr_number}: {pr.title}"
+        else:
+            return False, message
+
+    def get_pr(
+        self,
+        pr_number: int,
+    ) -> PullRequestInfo | None:
+        """
+        Get a pull request by number.
+
+        Args:
+            pr_number: PR number
+
+        Returns:
+            PullRequestInfo or None
+        """
+        return self._pull_requests.get(pr_number)
+
+    def get_pr_reviews(
+        self,
+        pr_number: int,
+    ) -> list[PRReview]:
+        """
+        Get reviews for a PR.
+
+        Args:
+            pr_number: PR number
+
+        Returns:
+            List of PRReview
+        """
+        pr = self._pull_requests.get(pr_number)
+        return getattr(pr, "_reviews", []) if pr else []
+
+    def add_pr_review(
+        self,
+        pr_number: int,
+        reviewer_id: str,
+        review_type: str,
+        body: str,
+        comments: list[dict] | None = None,
+    ) -> PRReview | None:
+        """
+        Add a review to a PR.
+
+        Args:
+            pr_number: PR number
+            reviewer_id: Reviewer agent ID
+            review_type: 'approved', 'changes_requested', or 'commented'
+            body: Review body text
+            comments: Optional line-level comments
+
+        Returns:
+            PRReview or None if PR not found
+        """
+        pr = self._pull_requests.get(pr_number)
+        if not pr:
+            return None
+
+        review = PRReview(
+            reviewer_id=reviewer_id,
+            review_type=review_type,
+            body=body,
+            comments=comments or [],
+        )
+
+        if not hasattr(pr, "_reviews"):
+            pr._reviews = []
+        pr._reviews.append(review)
+        return review
+
     def cleanup(self) -> None:
         """Clean up temporary directory."""
         if self._temp_dir and self.repo_path.exists():
-            shutil.rmtree(self.repo_path)
+            # Windows: Handle read-only files and file locks
+            import stat
+            import time
+
+            def handle_remove_readonly(func, path, exc_info):
+                """Error handler for shutil.rmtree that handles read-only files."""
+                try:
+                    os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+                    func(path)
+                except PermissionError:
+                    # File is locked, skip it
+                    pass
+
+            # Try normal cleanup first
+            try:
+                shutil.rmtree(self.repo_path, onerror=handle_remove_readonly)
+            except Exception:
+                # If cleanup fails, wait and retry (handles file locks)
+                time.sleep(0.5)
+                try:
+                    shutil.rmtree(self.repo_path, onerror=handle_remove_readonly)
+                except Exception:
+                    # Final attempt: just mark for deletion
+                    pass
 
     def __enter__(self) -> "GitSandbox":
         """Context manager entry."""

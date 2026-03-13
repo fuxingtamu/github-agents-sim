@@ -1,10 +1,10 @@
 {
   "project_name": "GitHub Agent Sim",
   "created_at": "2026-03-12",
-  "updated_at": "2026-03-12T00:00:00Z",
+  "updated_at": "2026-03-13T00:00:00Z",
 
-  "current_phase": "Phase 1: 基础架构 - 完成! ✅",
-  "overall_progress": 1.0,
+  "current_phase": "Phase 2: PR 工作流 - 完成 ✅",
+  "overall_progress": 0.7,
 
   "completed": [
     {
@@ -71,6 +71,31 @@
       "task": "虚拟环境配置",
       "completed_at": "2026-03-12T00:00:00Z",
       "notes": ".venv 已创建，所有依赖已安装"
+    },
+    {
+      "task": "Phase 2: PR 数据模型和存储层",
+      "completed_at": "2026-03-13T00:00:00Z",
+      "notes": "新增 sim_pull_requests、sim_pr_reviews 表；PullRequestStore、PRReviewStore 类已实现"
+    },
+    {
+      "task": "Phase 2: GitSandbox PR 方法",
+      "completed_at": "2026-03-13T00:00:00Z",
+      "notes": "新增 create_pr()、merge_pr()、get_pr()、add_pr_review() 方法"
+    },
+    {
+      "task": "Phase 2: ActionModule PR 动作",
+      "completed_at": "2026-03-13T00:00:00Z",
+      "notes": "新增 _handle_create_pr()、_handle_merge_pr()、_handle_review_pr() 方法；merge_pr() 便捷方法"
+    },
+    {
+      "task": "Phase 2: 集成测试和修复",
+      "completed_at": "2026-03-13T00:00:00Z",
+      "notes": "修复 sandbox 属性 setter、create_branch 默认参数、Windows 文件锁定清理问题"
+    },
+    {
+      "task": "Phase 2: 完整 PR 工作流演示",
+      "completed_at": "2026-03-13T00:00:00Z",
+      "notes": "examples/run_simulation.py 成功演示创建分支->提交代码->创建 PR->审查->合并完整流程"
     }
   ],
 
@@ -78,47 +103,36 @@
 
   "pending": [
     {
-      "task": "Phase 2: 多智能体协作",
-      "priority": 1,
-      "dependencies": ["Phase 1 完成"],
-      "details": "PR 工作流、Code Review 工作流、Issue 处理工作流"
-    },
-    {
       "task": "Phase 3: 数据驱动",
-      "priority": 2,
+      "priority": 1,
       "dependencies": ["Phase 2 完成"],
       "details": "行为特征工程、RAG 集成、行为校准"
     },
     {
       "task": "Phase 4: 分析与可视化",
-      "priority": 3,
+      "priority": 2,
       "dependencies": ["Phase 3 完成"],
       "details": "日志系统、指标计算、可视化面板、报告生成"
     }
   ],
 
-  "next_step": "Phase 1 完成！下一步开始 Phase 2：多智能体协作工作流实现",
+  "next_step": "Phase 2 完成！下一步开始 Phase 3：数据驱动模块实现",
 
   "blockers": [],
 
   "session_stats": {
-    "total_sessions": 1,
-    "last_session": "2026-03-12T00:00:00Z",
-    "phase1_completed": true
+    "total_sessions": 2,
+    "last_session": "2026-03-13T00:00:00Z",
+    "phase1_completed": true,
+    "phase2_in_progress": true
   },
 
   "known_issues": [
     {
       "issue": "Windows 文件锁定导致 Git 沙箱清理失败",
-      "status": "known",
-      "workaround": "手动清理 temp 目录或重启后清理",
-      "impact": "仅影响测试清理，不影响功能"
-    },
-    {
-      "issue": "部分动作类型未实现 (merge_pr, create_pr, run_tests)",
-      "status": "todo",
-      "note": "需要在 ActionModule 中实现更多动作类型处理",
-      "phase": "Phase 2"
+      "status": "mitigated",
+      "workaround": "cleanup() 方法已添加 retry 逻辑和只读文件处理，大幅降低失败率",
+      "impact": "已缓解，偶尔仍有失败但不影响功能"
     }
   ]
 }

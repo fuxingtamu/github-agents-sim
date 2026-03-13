@@ -67,9 +67,39 @@
 ## 会话记录
 
 ### Session: sim_001
+- 开始时间：2026-03-13
+- 智能体数量：5
+- 状态：Phase 2 开发中
+
+### Session: sim_002 (计划)
 - 开始时间：-
-- 智能体数量：-
+- 智能体数量：5+
 - 状态：未开始
+- 目标：完整 PR 工作流演示
+
+## Phase 2 进度
+| 任务 | 状态 |
+|------|------|
+| PR 数据模型 | ✅ 完成 |
+| PR 状态管理 | ✅ 完成 |
+| create_pr 实现 | ✅ 完成 |
+| review_pr 增强 | ✅ 完成 |
+| merge_pr 实现 | ✅ 完成 |
+| 测试验证 | ✅ 完成 |
+
+## Phase 2 完成总结
+Phase 2 实现了完整的 PR 工作流，包括：
+- **数据库层**: 新增 `sim_pull_requests` 和 `sim_pr_reviews` 表
+- **Store 类**: `PullRequestStore` 和 `PRReviewStore` 提供数据持久化
+- **GitSandbox**: 新增 `create_pr()`, `merge_pr()`, `get_pr()`, `add_pr_review()` 方法
+- **ActionModule**: 新增 `_handle_create_pr()`, `_handle_merge_pr()`, `_handle_review_pr()` 方法
+- **示例验证**: `examples/run_simulation.py` 成功演示完整 PR 流程
+
+### 修复的问题
+1. **sandbox 集成问题**: 添加 `sandbox` 属性 setter 同步更新 `git_executor.sandbox`
+2. **create_branch 默认参数**: 从 `"main"` 改为 `None`（使用当前分支）
+3. **Windows 文件锁定**: cleanup() 添加 retry 逻辑和只读文件处理
+4. **数据库唯一约束**: 创建 PR 前先检查是否已存在
 
 ## 最后更新
 - **最后更新时间**: 2026-03-12

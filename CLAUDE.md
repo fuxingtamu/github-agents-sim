@@ -22,6 +22,12 @@
 - **分配**: SQLite 3GB + 日志 1GB + 向量 400MB + 原始数据 500MB + 预留 100MB
 - **数据目录**: `data/db/`, `data/raw/`, `data/logs/`, `data/vectors/`, `data/cache/`
 
+## 运行命令
+- **激活虚拟环境**: `.venv/Scripts/activate` (Windows) 或 `source .venv/bin/activate` (Linux/Mac)
+- **运行测试**: `pytest tests/ -v` (必须先激活虚拟环境)
+- **运行示例**: `python examples/run_simulation.py` (必须先激活虚拟环境)
+- **安装依赖**: `pip install -r pyproject.toml`
+
 ## 错误记录
 | 日期 | 错误描述 | 原因 | 修复方案 | 状态 |
 |------|---------|------|---------|------|
@@ -82,5 +88,34 @@
 - `examples/run_simulation.py` - 示例模拟运行脚本
 
 ## 最后更新
-- **最后更新时间**: 2026-03-12
-- **当前 Phase**: Phase 1 - 基础架构 ✅ 完成
+- **最后更新时间**: 2026-03-13
+- **当前 Phase**: Phase 2 - PR 工作流 ✅ 完成
+
+## Phase 2 完成模块
+
+### PR 数据模型
+- `database.py` - 新增 `sim_pull_requests`、`sim_pr_reviews` 表
+- `store.py` - `PullRequestStore`、`PRReviewStore` 类
+
+### GitSandbox 扩展
+- `create_pr()` - 创建 PR
+- `merge_pr()` - 合并 PR
+- `get_pr()` - 获取 PR 信息
+- `add_pr_review()` - 添加 PR 审查
+
+### ActionModule 扩展
+- `_handle_create_pr()` - 处理创建 PR
+- `_handle_merge_pr()` - 处理合并 PR
+- `_handle_review_pr()` - 处理审查 PR
+- `merge_pr()` - 便捷方法
+
+### 修复记录
+| 问题 | 修复方案 |
+|------|---------|
+| sandbox 集成问题 | 添加 `sandbox` 属性 setter 同步更新 `git_executor` |
+| create_branch 默认参数 | 从 `"main"` 改为 `None` |
+| Windows 文件锁定 | cleanup() 添加 retry 和只读处理 |
+| PR 唯一约束冲突 | 创建前先检查是否存在 |
+
+## 注意事项
+- **虚拟环境**: 所有测试和示例必须在虚拟环境中运行，命令前需执行 `.venv/Scripts/activate`
